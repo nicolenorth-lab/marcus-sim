@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marcus Chen — Performance Conversation Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2EFE9;
+    --surface: #FAFAF8;
+    --surface2: #EFEFEB;
+    --border: #DDDBD5;
+    --text: #1C1C1A;
+    --text-muted: #888884;
+    --text-faint: #AEAAA4;
+    --accent: #2B5C3F;
+    --accent-light: #E8F0EB;
+    --accent-text: #1A3D29;
+    --you-bg: #1C1C1A;
+    --you-text: #F2EFE9;
+    --danger: #8B2020;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Header */
+  #top {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  #avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 500; letter-spacing: 0.5px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  #header-info { flex: 1; }
+  #header-info .name { font-size: 15px; font-weight: 500; color: var(--text); }
+  #header-info .role { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  #status {
+    font-size: 11px; font-family: var(--mono);
+    color: var(--accent); background: var(--accent-light);
+    padding: 4px 10px; border-radius: 20px;
+    border: 1px solid #C4D9CB;
+    letter-spacing: 0.3px;
+  }
+
+  /* Chat window */
+  #chat-window {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    padding: 1.5rem;
+    min-height: 320px;
+    max-height: 460px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+
+  .system-msg {
+    text-align: center;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text-faint);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .msg-group { display: flex; flex-direction: column; gap: 3px; }
+  .msg-group.you { align-items: flex-end; }
+
+  .speaker-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-faint);
+    padding: 0 4px;
+    letter-spacing: 0.3px;
+  }
+
+  .bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    border-radius: 14px;
+  }
+
+  .bubble.marcus {
+    background: var(--surface2);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .bubble.you {
+    background: var(--you-bg);
+    color: var(--you-text);
+    border-bottom-right-radius: 4px;
+  }
+
+  /* Typing indicator */
+  .typing-bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    padding: 12px 16px;
+    display: flex; gap: 5px; align-items: center;
+    width: fit-content;
+  }
+
+  .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    animation: pulse 1.4s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,60%,100%{opacity:0.2;transform:scale(0.85)} 30%{opacity:1;transform:scale(1)} }
+
+  /* Input area */
+  #input-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 16px 16px;
+    padding: 1rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #hint {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-faint);
+    letter-spacing: 0.2px;
+    padding: 0 2px;
+  }
+
+  #row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  #user-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    resize: none;
+    min-height: 42px;
+    max-height: 120px;
+    outline: none;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+  }
+  #user-input:focus { border-color: var(--accent); }
+  #user-input::placeholder { color: var(--text-faint); }
+  #user-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #send-btn {
+    padding: 10px 18px;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  #send-btn:hover { opacity: 0.85; }
+  #send-btn:active { transform: scale(0.97); }
+  #send-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+
+  /* Debrief */
+  #debrief {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 1.5rem;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text);
+  }
+
+  #debrief-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  #debrief p { margin-bottom: 0.9rem; }
+  #debrief p:last-child { margin-bottom: 0; }
+
+  #restart-area {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 16px 16px;
+    padding: 1rem 1.5rem;
+  }
+
+  #restart-btn {
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+  #restart-btn:hover { background: var(--surface2); color: var(--text); }
+
+  #error-msg {
+    font-size: 12px;
+    color: var(--danger);
+    font-family: var(--mono);
+    display: none;
+    padding: 0 2px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="top">
+    <div id="avatar">MC</div>
+    <div id="header-info">
+      <div class="name">Marcus Chen</div>
+      <div class="role">Coordinator · City of Burlington · 12 years</div>
+    </div>
+    <div id="status">practice</div>
+  </div>
+
+  <div id="chat-window">
+    <div class="system-msg">You are Marcus's manager. Start the conversation.</div>
+  </div>
+
+  <div id="input-area">
+    <div id="hint">Try opening with a genuine question before giving feedback.</div>
+    <div id="row">
+      <textarea id="user-input" rows="1" placeholder="Say something to Marcus…"></textarea>
+      <button id="send-btn" onclick="send()">Send</button>
+    </div>
+    <div id="error-msg"></div>
+  </div>
+
+  <div id="debrief">
+    <div id="debrief-label">Debrief</div>
+    <div id="debrief-content"></div>
+  </div>
+
+  <div id="restart-area">
+    <button id="restart-btn" onclick="restart()">↩ Try again</button>
+  </div>
+
+</div>
+
+<script>
+  let history = [];
+  const chatEl = document.getElementById('chat-window');
+  const inputEl = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const errorEl = document.getElementById('error-msg');
+
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+  });
+
+  function addBubble(text, role) {
+    const group = document.createElement('div');
+    group.className = 'msg-group' + (role === 'you' ? ' you' : '');
+    const label = document.createElement('div');
+    label.className = 'speaker-label';
+    label.textContent = role === 'you' ? 'you' : 'marcus';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble ' + role;
+    bubble.textContent = text;
+    group.appendChild(label);
+    group.appendChild(bubble);
+    chatEl.appendChild(group);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function showTyping() {
+    const wrap = document.createElement('div');
+    wrap.id = 'typing';
+    wrap.className = 'msg-group';
+    const label = document.createElement('div');
+    label.className = 'speaker-label';
+    label.textContent = 'marcus';
+    const t = document.createElement('div');
+    t.className = 'typing-bubble';
+    t.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    wrap.appendChild(label);
+    wrap.appendChild(t);
+    chatEl.appendChild(wrap);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.style.display = 'block';
+  }
+
+  function clearError() {
+    errorEl.style.display = 'none';
+  }
+
+  async function send() {
+    const text = inputEl.value.trim();
+    if (!text || sendBtn.disabled) return;
+    clearError();
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    addBubble(text, 'you');
+    history.push({ role: 'user', content: text });
+    showTyping();
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history })
+      });
+
+      const data = await res.json();
+      removeTyping();
+
+      if (!res.ok) {
+        showError('Error: ' + (data.error || 'Something went wrong.'));
+        sendBtn.disabled = false;
+        return;
+      }
+
+      const reply = data.reply;
+
+      if (reply.includes('[DEBRIEF]')) {
+        const parts = reply.split('[DEBRIEF]');
+        const closing = parts[0].trim();
+        const debriefText = parts[1] ? parts[1].trim() : '';
+        if (closing) addBubble(closing, 'marcus');
+        history.push({ role: 'assistant', content: reply });
+        if (debriefText) setTimeout(() => showDebrief(debriefText), 600);
+        inputEl.disabled = true;
+        sendBtn.disabled = true;
+        document.getElementById('hint').style.display = 'none';
+      } else {
+        addBubble(reply, 'marcus');
+        history.push({ role: 'assistant', content: reply });
+        sendBtn.disabled = false;
+        inputEl.focus();
+      }
+
+    } catch (err) {
+      removeTyping();
+      showError('Network error — please check your connection.');
+      sendBtn.disabled = false;
+    }
+  }
+
+  function showDebrief(text) {
+    const debrief = document.getElementById('debrief');
+    const content = document.getElementById('debrief-content');
+    const restartArea = document.getElementById('restart-area');
+
+    document.getElementById('input-area').style.borderRadius = '0';
+
+    const paras = text.split(/\n\n+/).filter(p => p.trim());
+    content.innerHTML = paras.map(p => `<p>${p.trim()}</p>`).join('');
+    debrief.style.display = 'block';
+    restartArea.style.display = 'block';
+    debrief.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function restart() {
+    history = [];
+    chatEl.innerHTML = '<div class="system-msg">You are Marcus\'s manager. Start the conversation.</div>';
+    document.getElementById('debrief').style.display = 'none';
+    document.getElementById('restart-area').style.display = 'none';
+    document.getElementById('input-area').style.borderRadius = '';
+    document.getElementById('hint').style.display = 'block';
+    inputEl.disabled = false;
+    inputEl.value = '';
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+</script>
+</body>
+</html>
